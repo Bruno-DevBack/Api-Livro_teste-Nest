@@ -1,33 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Livro } from './livro.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Livro, LivroDocument } from './livro.schema';
 
 @Injectable()
 export class LivroService {
- constructor(
- @InjectRepository(Livro)
- private livroRepository: Repository<Livro>,
- ) {}
+  constructor(
+    @InjectModel(Livro.name)
+    private livroModel: Model<LivroDocument>,
+  ) {}
 
- findAll(): Promise<Livro[]> {
- return this.livroRepository.find();
- }
+  async findAll(): Promise<Livro[]> {
+    return this.livroModel.find().exec();
+  }
 
- create(livro: Livro): Promise<Livro> {
- return this.livroRepository.save(livro);
- }
+  async create(livro: Livro): Promise<Livro> {
+    const novoLivro = new this.livroModel(livro);
+    return novoLivro.save();
+  }
 
- async remove(id: number): Promise<void> {
- await this.livroRepository.delete(id);
- }
+  async remove(id: string): Promise<void> {
+    const resultado = await this.livroModel.deleteOne({ _id: id }).exec();
+    if (resultado.deletedCount === 0) {
+      throw new NotFoundException(`Livro com ID ${id} não encontrado`);
+    }
+  }
 
- async update(id: number, livro: Livro): Promise<Livro> {
- await this.livroRepository.update(id, livro);
- const updatedLivro = await this.livroRepository.findOne({ where: { id } });
- if (!updatedLivro) {
- throw new NotFoundException(`Livro com ID ${id} não encontrado`);
- }
- return updatedLivro;
- }
+  async update(id: string, livro: Livro): Promise<Livro> {
+    const livroAtualizado = await this.livroModel
+      .findByIdAndUpdate(id, livro, { new: true })
+      .exec();
+    
+    if (!livroAtualizado) {
+      throw new NotFoundException(`Livro com ID ${id} não encontrado`);
+    }
+    return livroAtualizado;
+  }
 }

@@ -1,20 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Livro } from './livro/livro.entity';
+import { MongooseModule } from '@nestjs/mongoose';
 import { LivroModule } from './livro/livro.module';
+
 @Module({
-imports: [
-TypeOrmModule.forRoot({
-type: 'mysql',
-host: 'localhost',
-port: 3306,
-username: 'root',
-password: '',
-database: 'biblio',
-entities: [Livro],
-synchronize: true,
-}),
-LivroModule,
-],
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost:27017/biblioteca'),
+    LivroModule,
+  ],
 })
 export class AppModule {}
